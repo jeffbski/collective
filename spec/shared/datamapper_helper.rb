@@ -1,6 +1,6 @@
-require 'data_mapper'
+require 'dm-core'
 
-class DataMapper::Base
+module DataMapper::Resource
   # Provides an easy-to-use interface for testing for errors on a specific 
   # attribute.
   # 

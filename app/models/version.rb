@@ -1,29 +1,31 @@
-class Version < DataMapper::Base
-  property :content,      :text
-  property :content_html, :text
-  property :created_at,   :datetime
-  property :moderated,    :boolean, :default => false
-  property :number,       :integer
-  property :spam,         :boolean, :default => false
-  property :spaminess,    :float,   :default => 0
-  property :signature,    :string
+class Version 
+  include DataMapper::Resource
+  property :id,		  Integer, :serial => true
+  property :content,      Text
+  property :content_html, Text
+  property :created_at,   DateTime
+  property :moderated,    Boolean, :default => false
+  property :number,       Integer
+  property :spam,         Boolean, :default => false
+  property :spaminess,    Float,   :default => 0
+  property :signature,    String
   
   belongs_to :page
   
-  before_save :populate_content_html
+  before :save, :populate_content_html
 
-  validates_presence_of :content
-
+  validates_present :content 
+  
   def spam_or_ham
     spam? ? 'spam' : 'ham'
   end
   
   def self.most_recent_unmoderated(max=100)
-    all(:moderated => false, :limit => max, :order => 'created_at DESC')
+    all(:moderated => false, :limit => max, :order => [:created_at.desc])
   end
   
   def self.latest_version_for_page(page)
-    first(:page_id => page.id, :order => 'number DESC', :spam => false)
+    page.versions.first(:order => [:number.desc], :spam => false)
   end
   
   def self.create_spam(page_name, options={})
@@ -37,7 +39,7 @@ class Version < DataMapper::Base
   end
   
   def self.recent(number = 10)
-    all(:limit => number, :order => 'id DESC', :spam => false)
+    all(:limit => number, :order => [:id.desc], :spam => false)
   end
 
   # Generate the diff between the version and another

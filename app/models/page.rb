@@ -1,20 +1,25 @@
 require 'diff/lcs'
 
-class Page < DataMapper::Base
-  property :name, :string, :nullable => false
+class Page 
+  include DataMapper::Resource
+  property :id, Integer, :serial => true
+  property :name, String, :nullable => false
   attr_accessor :spam
   attr_accessor :spaminess
   attr_accessor :remote_ip
   attr_accessor :signature
-  property :slug, :string, :nullable => false
-  property :versions_count, :integer, :default => 0
-  has_many :versions, :spam => false, :dependent => :destroy
+  property :slug, String, :nullable => false
+  property :versions_count, Integer, :default => 0
+  has n, :versions, :spam => false 
   
-  before_save :build_new_version
-  before_validation :set_slug
+  before :save, :build_new_version
 
-  validates_uniqueness_of :slug
-  validates_uniqueness_of :name
+  before :destroy do
+    self.versions.each { |v| v.destroy }
+  end
+
+  validates_is_unique :slug
+  validates_is_unique :name
 
   def self.by_slug(slug)
     first(:slug => slug)
@@ -33,7 +38,7 @@ class Page < DataMapper::Base
   attr_accessor :content_diff
   def content=(new_content)
     self.content_diff = diff(new_content)
-    @content          = new_content
+    @content = new_content
   end
   
   def content
@@ -49,7 +54,8 @@ class Page < DataMapper::Base
   end
 
   def name=(new_name)
-    @name = new_name if new_record?
+    attribute_set(:name, new_name) if new_record?
+    set_slug if new_record?
   end
 
   def select_version!(version_number=:latest)
@@ -89,7 +95,7 @@ private
     self.versions_count  += 1 unless spam
     
     # Don't use #build as it is NULLifying the page_id field of this page's other versions
-    versions.create(version_attributes)
+    versions << Version.new(version_attributes)
   end
   
   def find_selected_version(version_number)
@@ -104,7 +110,6 @@ private
   def version_attributes
     defaults = { 
       :content   => content, 
-      :remote_ip => remote_ip, 
       :signature => signature
     }
     if spam

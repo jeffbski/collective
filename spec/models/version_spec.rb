@@ -29,7 +29,7 @@ describe Version do
     end
     
     it 'should have a created_at field' do
-      creation_time = Time.now
+      creation_time = DateTime.now
       Version.new(:created_at => creation_time).created_at.should == creation_time
     end
 
@@ -101,15 +101,15 @@ describe Version do
 
   describe '.previous' do
     before(:each) do
-      Version.delete_all
-      Page.delete_all
+      Version.all.each { |v| v.destroy }
+      Page.all.each { |p| p.destroy }
       @page = Page.gen(:page_with_several_versions)
-      @page.content = 17.random.words.join(' ')
+      @page.content = RandomHelper::Random.words
       @page.save!
-      @page.content = 17.random.words.join(' ')
+      @page.content = RandomHelper::Random.words
       @page.save!
       @content = @page.versions.first.content
-      @versions = @page.versions.items.sort { |a,b| a.number <=> b.number }
+      @versions = @page.versions.sort { |a,b| a.number <=> b.number }
     end
 
     it 'should get the previous version for this page' do
@@ -137,7 +137,7 @@ describe Version do
 
   describe ".create_spam" do
     after(:each) do
-      Version.delete_all
+      Version.all.each { |v| v.destroy }
     end
     
     it "should create a new record" do

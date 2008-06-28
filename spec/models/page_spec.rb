@@ -16,7 +16,7 @@ describe Page do
     end
 
     it 'should have many versions' do
-      Page.new.versions.should be_an_instance_of(DataMapper::Associations::HasManyAssociation::Set)
+      Page.new.versions.should be_a_kind_of(DataMapper::Associations::OneToMany::Proxy)
     end
 
     it 'should have a versions_count property' do
@@ -35,7 +35,7 @@ describe Page do
       page.versions_count = 1
       
       page.stub!(:valid?).and_return(true)
-      page.stub!(:versions).and_return(stub('versions', :create => true, :deactivate => true))
+      page.stub!(:versions).and_return(stub('versions', :deactivate => true, :<< => []))
     end
     
     after(:each) do
@@ -57,7 +57,7 @@ describe Page do
     end
     
     it 'should build a new Version' do
-      page.should_receive(:versions).and_return(mock('versions', :create => true))
+      page.should_receive(:versions).and_return(mock('versions', :<< => []))
       Page.publicize_methods(page) do |p|
         p.build_new_version
       end
@@ -186,16 +186,16 @@ describe Page do
         :content_html => '<p>Updated Content</p>', 
         :number       => 2
       )
-      page.versions << initial_version
-      page.versions << updated_version
+      self.page.versions << self.initial_version
+      self.page.versions << self.updated_version
       
       Version.stub!(:latest_version_for_page).and_return(updated_version)
     end
     
     after(:each) do
-      page.destroy!
-      initial_version.destroy!
-      updated_version.destroy!
+      page.destroy
+      initial_version.destroy
+      updated_version.destroy
     end
     
     it "should select the latest version if no version number was specified" do
@@ -246,13 +246,6 @@ describe Page do
       page.slug.should == 'asuperinformativepage'
     end
 
-    it 'should be set before validations' do
-      page = Page.new(:name => 'asuperinformativepage')
-      page.slug.should be_nil
-      page.valid?
-      page.slug.should == 'asuperinformativepage'
-    end
-    
     it 'should be the page name downcased' do
       page = Page.new(:name => 'ASuperInformativePage')
       page.valid?
@@ -313,7 +306,8 @@ describe Page do
   
   describe '.versions' do
     it 'should not include any versions marked as spam' do
-      @page = Page.create!(:name => 'A Page', :content => 'blah')
+      @page = Page.new(:name => 'A Page', :content => 'blah')
+      @page.save
       @page.update_attributes(:content => 'spam', :spam => true)
       Page[@page.id].versions.length.should == 1
     end
