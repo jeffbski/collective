@@ -29,7 +29,7 @@ Dependencies required
 * RedCloth
 * vikinggem
 * merb_datamapper
-* datamapper (<=0.3)
+* datamapper (>= 0.9.4)
 * merb_helpers
 * diff-lcs
 * can\_has\_fixtures (use for spec test)
